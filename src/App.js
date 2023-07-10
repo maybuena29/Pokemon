@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { Button, Input, Modal, Popconfirm, notification } from 'antd';
+import { Button, Card, Input, Modal, Popconfirm, Select, notification } from 'antd';
 import axios from 'axios';
+
+const { Option } = Select;
 
 const openNotif = (type) => {
   if(type === 'success'){
@@ -88,6 +90,8 @@ function App() {
   }
 
   const updatePokemon = () => {
+    console.log("name:", pokemonName);
+    console.log("pokemon id:", pokemonTempID);
     const newData = pokemonData.filter(newPokeName => {
       if(newPokeName.id === pokemonTempID){
         newPokeName.name = pokemonName;
@@ -102,7 +106,7 @@ function App() {
 
   const [pokemonTempID, setPokemonTempID] = useState('');
   const fetchData = (pokemonID) => {
-    const pokeName = pokemonData.filter(data => data.id === pokemonID);
+    const pokeName = pokemonData.filter( data => data.id == pokemonID);
     setPokemonName(pokeName.name);
     setPokemonTempID(pokemonID);
   }
@@ -116,18 +120,16 @@ function App() {
       <div className="md:m-10">
         
         {/* Header */}
-        <div className='fixed z-40 w-full bg-white md:static dark:bg-main-dark-bg navbar'>
-          <div className='flex w-full h-12 mt-2 mb-10'>
-            <p className='w-full text-3xl font-semibold tracking-wide text-gray-500 font-poppins'>List of Pokemon</p>
-            <div className='relative w-full'>
-              <div className='absolute right-0 w-34'>
-                <Button className="w-auto h-10 px-10 my-auto text-xs font-medium tracking-wide border-0 rounded-lg font-poppins md:text-lg sm:text-base" style={{backgroundColor: '#46E4AC'}}
-                  onClick={() => {
-                    setAddModal(true);
-                  }}>
-                  <span>Add Pokemon</span>
-                </Button>
-              </div>
+        <div className='flex w-full h-12 mt-2 mb-10'>
+          <p className='w-auto text-3xl font-semibold tracking-wide text-gray-500 font-poppins'>List of <span className=''>Pokemon</span></p>
+          <div className='relative w-full'>
+            <div className='absolute right-0 w-34'>
+              <Button className="w-auto h-10 px-10 my-auto text-xs font-medium tracking-wide border-0 rounded-lg font-poppins md:text-lg sm:text-base" style={{backgroundColor: '#46E4AC'}} 
+                onClick={() => {
+                  setAddModal(true);
+                }}>
+                <span>Add Pokemon</span>
+              </Button>
             </div>
           </div>
         </div>
@@ -136,7 +138,6 @@ function App() {
         <div className="flex items-center justify-center w-full overflow-auto min-w-screen">
           <div className="grid grid-flow-row-dense grid-cols-1 gap-20 md:grid-cols-2 lg:grid-cols-3">
             
-              {/* Pokemon Card */}
               {pokemonData && pokemonData.map((pokemon) => (
                 <div className="relative float-left w-auto p-5 mt-2 border-2 rounded-lg shadow-md site-card-wrapper" key={pokemon.id}>
                   <div className="items-center justify-center w-full">
