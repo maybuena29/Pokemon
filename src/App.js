@@ -116,7 +116,7 @@ function App() {
       <div className="md:m-10">
         
         {/* Header */}
-        <div className='fixed md:static bg-white dark:bg-main-dark-bg navbar w-full z-40'>
+        <div className='fixed z-40 w-full bg-white md:static dark:bg-main-dark-bg navbar'>
           <div className='flex w-full h-12 mt-2 mb-10'>
             <p className='w-full text-3xl font-semibold tracking-wide text-gray-500 font-poppins'>List of Pokemon</p>
             <div className='relative w-full'>
