@@ -104,7 +104,7 @@ function App() {
 
   const [pokemonTempID, setPokemonTempID] = useState('');
   const fetchData = (pokemonID) => {
-    const pokeName = pokemonData.filter(data => data.id === pokemonID);
+    const pokeName = pokemonData.filter( data => data.id === pokemonID);
     setPokemonName(pokeName.name);
     setPokemonTempID(pokemonID);
   }
