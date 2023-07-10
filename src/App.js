@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { Button, Card, Input, Modal, Popconfirm, Select, notification } from 'antd';
+import { Button, Input, Modal, Popconfirm, notification } from 'antd';
 import axios from 'axios';
-
-const { Option } = Select;
 
 const openNotif = (type) => {
   if(type === 'success'){
@@ -90,8 +88,6 @@ function App() {
   }
 
   const updatePokemon = () => {
-    console.log("name:", pokemonName);
-    console.log("pokemon id:", pokemonTempID);
     const newData = pokemonData.filter(newPokeName => {
       if(newPokeName.id === pokemonTempID){
         newPokeName.name = pokemonName;
