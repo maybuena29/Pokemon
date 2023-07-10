@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import { BiSearchAlt } from "react-icons/bi";
 import { Button, Input, Modal, Popconfirm, notification } from 'antd';
 import axios from 'axios';
 
@@ -38,6 +39,7 @@ const openNotif = (type) => {
 function App() {
   const [pokemonData, setPokemonData] = useState([]);
   const [pokemonName, setPokemonName] = useState("");
+  const [searchValue, setSearchValue] = useState("");
   
   const [addModal, setAddModal] = useState(false);
   const [updateModal, setUpdateModal] = useState(false);
@@ -112,6 +114,14 @@ function App() {
     setPokemonData(newData);
   }
 
+  // Search
+  const search = (data) => {
+    return data.filter((item) =>
+      item.name.toLowerCase().includes(searchValue) ||
+      item.types[0].type.name.toLowerCase().includes(searchValue)
+    )
+  }
+
   return (
       <div className="md:m-10">
         
@@ -119,6 +129,10 @@ function App() {
         <div className='fixed md:static bg-white dark:bg-main-dark-bg navbar w-full z-40'>
           <div className='flex w-full h-12 mt-2 mb-10'>
             <p className='w-full text-3xl font-semibold tracking-wide text-gray-500 font-poppins'>List of Pokemon</p>
+            <div className='w-full'>
+              <Input style={{ fontSize: '16', borderColor: "#747C95" }} className='w-full rounded-2xl mr-3.5 items-center font-poppins bor' placeholder='Search Pokemon...' suffix={<BiSearchAlt className="text-xl" style={{color: "#747C95" }}/>}
+                    onChange = {(e) => {setSearchValue(e.target.value.toLowerCase())}} value={searchValue}/>
+            </div>
             <div className='relative w-full'>
               <div className='absolute right-0 w-34'>
                 <Button className="w-auto h-10 px-10 my-auto text-xs font-medium tracking-wide border-0 rounded-lg font-poppins md:text-lg sm:text-base" style={{backgroundColor: '#46E4AC'}}
@@ -129,6 +143,7 @@ function App() {
                 </Button>
               </div>
             </div>
+                  
           </div>
         </div>
 
@@ -137,7 +152,7 @@ function App() {
           <div className="grid grid-flow-row-dense grid-cols-1 gap-20 md:grid-cols-2 lg:grid-cols-3">
             
               {/* Pokemon Card */}
-              {pokemonData && pokemonData.map((pokemon) => (
+              {pokemonData && search(pokemonData).map((pokemon) => (
                 <div className="relative float-left w-auto p-5 mt-2 border-2 rounded-lg shadow-md site-card-wrapper" key={pokemon.id}>
                   <div className="items-center justify-center w-full">
                     <div className="flex flex-col justify-center w-full gap-1 text-center">
