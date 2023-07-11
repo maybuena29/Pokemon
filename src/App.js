@@ -59,7 +59,6 @@ function App() {
       );
 
       setPokemonData(pokemonData);
-      console.log(pokemonData);
     } catch (error) {
       console.log(error);
     }
@@ -77,11 +76,15 @@ function App() {
 
   const addPokemon = async () => {
     try {
-      const response = await axios.get(
-        `https://pokeapi.co/api/v2/pokemon/${pokemonName}`
-      );
-      setPokemonData([...pokemonData, response.data]);
-      openNotif('success')
+      if(pokemonName.trim().length === 0){
+        openNotif('error');
+      }else{
+        const response = await axios.get(
+          `https://pokeapi.co/api/v2/pokemon/${pokemonName}`
+        );
+        setPokemonData([...pokemonData, response.data]);
+        openNotif('success')
+      }
     } catch (error) {
       openNotif('error');
     }
@@ -90,16 +93,25 @@ function App() {
   }
 
   const updatePokemon = () => {
-    const newData = pokemonData.filter(newPokeName => {
-      if(newPokeName.id === pokemonTempID){
-        newPokeName.name = pokemonName;
+    try{
+      if(pokemonName.trim().length === 0){
+        openNotif('error')
+      }else{
+        const newData = pokemonData.filter(newPokeName => {
+          if(newPokeName.id === pokemonTempID){
+            newPokeName.name = pokemonName;
+          }
+          return newPokeName;
+        });
+    
+        setPokemonData(newData);
+        handleOk();
+        openNotif('info');
       }
-      return newPokeName;
-    });
-
-    setPokemonData(newData);
-    handleOk();
-    openNotif('info');
+    }catch(e){
+      openNotif('error');
+    }
+    
   }
 
   const [pokemonTempID, setPokemonTempID] = useState('');
@@ -110,8 +122,12 @@ function App() {
   }
 
   const deletePokemon = (pokemonID) => {
-    const newData = pokemonData.filter( data => data.id !== pokemonID);
-    setPokemonData(newData);
+    try{
+      const newData = pokemonData.filter( data => data.id !== pokemonID);
+      setPokemonData(newData);
+    }catch(e){
+      openNotif('error');
+    }
   }
 
   // Search
@@ -126,30 +142,33 @@ function App() {
       <div className="md:m-10">
         
         {/* Header */}
-        <div className='fixed z-40 w-full bg-white md:static dark:bg-main-dark-bg navbar'>
-          <div className='flex w-full h-12 mt-2 mb-10'>
-            <p className='w-full text-3xl font-semibold tracking-wide text-gray-500 font-poppins'>List of Pokemon</p>
-            <div className='w-full'>
-              <Input style={{ fontSize: '16', borderColor: "#747C95" }} className='w-full rounded-2xl mr-3.5 items-center font-poppins bor' placeholder='Search Pokemon...' suffix={<BiSearchAlt className="text-xl" style={{color: "#747C95" }}/>}
+        <div className='fixed z-40 w-full bg-white md:static'>
+          <div className='flex flex-col lg:flex-row w-full h-12 mt-5 mb-10'>
+            <div className='lg:w-1/3 w-full flex items-center justify-center'>
+              <p className='px-16 lg:px-5 text-3xl font-semibold tracking-wide text-gray-500 font-poppins'>List of Pokemon</p>
+            </div>
+            <div className='lg:w-1/3 w-full lg:px-0 px-10'>
+              <Input style={{ fontSize: '16', borderColor: "#747C95" }} className='w-full rounded-2xl mr-3.5 lg:mt-2 mt-4 m-auto items-center font-poppins bor' placeholder='Search Pokemon...' suffix={<BiSearchAlt className="text-xl" style={{color: "#747C95" }}/>}
                     onChange = {(e) => {setSearchValue(e.target.value.toLowerCase())}} value={searchValue}/>
             </div>
-            <div className='relative w-full'>
-              <div className='absolute right-0 w-34'>
-                <Button className="w-auto h-10 px-10 my-auto text-xs font-medium tracking-wide border-0 rounded-lg font-poppins md:text-lg sm:text-base" style={{backgroundColor: '#46E4AC'}}
-                  onClick={() => {
-                    setAddModal(true);
-                  }}>
-                  <span>Add Pokemon</span>
-                </Button>
+            <div className='lg:w-1/3 w-full lg:px-0 px-10 lg:mt-0 mt-4'>
+              <div className='relative w-full'>
+                <div className='absolute right-0 lg:w-auto w-full'>
+                  <Button className="lg:w-auto w-full h-10 px-10 my-auto text-xs font-medium tracking-wide border-0 rounded-lg font-poppins md:text-lg sm:text-base" style={{backgroundColor: '#46E4AC'}}
+                    onClick={() => {
+                      setAddModal(true);
+                    }}>
+                    <span>Add Pokemon</span>
+                  </Button>
+                </div>
               </div>
             </div>
-                  
           </div>
         </div>
 
         {/* Body */}
         <div className="flex items-center justify-center w-full overflow-auto min-w-screen">
-          <div className="grid grid-flow-row-dense grid-cols-1 gap-20 md:grid-cols-2 lg:grid-cols-3">
+          <div className="lg:mt-0 sm:mt-44 md:mt-20 mt-48 grid grid-flow-row-dense grid-cols-1 gap-20 md:grid-cols-2 lg:grid-cols-3">
             
               {/* Pokemon Card */}
               {pokemonData && search(pokemonData).map((pokemon) => (
