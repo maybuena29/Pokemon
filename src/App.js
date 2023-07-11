@@ -79,8 +79,9 @@ function App() {
       if(pokemonName.trim().length === 0){
         openNotif('error');
       }else{
+        const temp = pokemonName.toLowerCase();
         const response = await axios.get(
-          `https://pokeapi.co/api/v2/pokemon/${pokemonName}`
+          `https://pokeapi.co/api/v2/pokemon/${temp}`
         );
         setPokemonData([...pokemonData, response.data]);
         openNotif('success')
