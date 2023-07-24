@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import { BiSearchAlt } from "react-icons/bi";
 import { Button, Input, Modal, Popconfirm, notification } from 'antd';
+import EmptyPokemon from './EmptyPokemon';
 import axios from 'axios';
+
+const api = 'http://localhost:3001';
 
 const openNotif = (type) => {
   if(type === 'success'){
@@ -39,26 +42,19 @@ const openNotif = (type) => {
 function App() {
   const [pokemonData, setPokemonData] = useState([]);
   const [pokemonName, setPokemonName] = useState("");
+
   const [searchValue, setSearchValue] = useState("");
+  const [counter, setCounter] = useState(0);
   
   const [addModal, setAddModal] = useState(false);
   const [updateModal, setUpdateModal] = useState(false);
+  const [pokemonTempID, setPokemonTempID] = useState('');
 
   const fetchPokemonData = async () => {
     try {
-      const response = await axios.get(
-        'https://pokeapi.co/api/v2/pokemon?limit=10&offset=4'
-      );
-      const results = response.data.results;
-  
-      const pokemonData = await Promise.all(
-        results.map(async (pokemon) => {
-          const res = await axios.get(pokemon.url);
-          return res.data;
-        })
-      );
-
-      setPokemonData(pokemonData);
+      const {data} = await axios.get(`${api}/api/pokemon/get`);
+      setPokemonData(data);
+      
     } catch (error) {
       console.log(error);
     }
@@ -68,7 +64,12 @@ function App() {
     fetchPokemonData();
   }, []);
 
+  useEffect(() => {
+    fetchPokemonData();
+  }, [counter]);
+
   const handleOk = () => {
+    fetchPokemonData();
     setAddModal(false);
     setUpdateModal(false);
     setPokemonName('');
@@ -83,8 +84,29 @@ function App() {
         const response = await axios.get(
           `https://pokeapi.co/api/v2/pokemon/${temp}`
         );
-        setPokemonData([...pokemonData, response.data]);
+
+        const newPokemonData = {
+          pokemonID: response.data.id,
+          name: response.data.name,
+          type: response.data.types[0].type.name,
+          image: response.data.sprites.front_default,
+        };
+
+        if(response.data && response.data.name && response.data.types[0]?.type?.name){
+          axios.post(`${api}/api/pokemon/insert`, newPokemonData).then((res) => {
+            console.log('Add Result: ', res);
+          }).catch((err) => {
+            alert(err.response.data);
+          });
+        }else{
+          console.log("DI GUMANA YUNG ADD!");
+        }
+          
+        setCounter((e) => e + 1)
+        fetchPokemonData();
         openNotif('success')
+
+        // setPokemonData([...pokemonData, response.data]);
       }
     } catch (error) {
       openNotif('error');
@@ -93,19 +115,33 @@ function App() {
     handleOk();
   }
 
-  const updatePokemon = () => {
+  const updatePokemon = async () => {
     try{
       if(pokemonName.trim().length === 0){
         openNotif('error')
       }else{
-        const newData = pokemonData.filter(newPokeName => {
-          if(newPokeName.id === pokemonTempID){
-            newPokeName.name = pokemonName;
-          }
-          return newPokeName;
-        });
-    
-        setPokemonData(newData);
+        // const newData = pokemonData.filter(newPokeName => {
+        //   if(newPokeName.id === pokemonTempID){
+        //     newPokeName.name = pokemonName;
+        //   }
+        //   return newPokeName;
+        // });
+        // setPokemonData(newData);
+        try{
+          const updatePokemonData = {
+            name: pokemonName,
+          };
+  
+          await axios.put(`${api}/api/pokemon/update/${pokemonTempID}`, updatePokemonData).then((resp) => {
+            console.log("Update Result: ", resp)
+          }).catch((err) => {
+            console.log(err.response.data);
+          });
+        }catch(err) {
+          openNotif('error');
+        }
+        
+        fetchPokemonData();
         handleOk();
         openNotif('info');
       }
@@ -115,17 +151,26 @@ function App() {
     
   }
 
-  const [pokemonTempID, setPokemonTempID] = useState('');
   const fetchData = (pokemonID) => {
-    const pokeName = pokemonData.filter( data => data.id === pokemonID);
+    const pokeName = pokemonData.filter( data => data.PokemonID === pokemonID);
     setPokemonName(pokeName.name);
     setPokemonTempID(pokemonID);
   }
 
-  const deletePokemon = (pokemonID) => {
+  const deletePokemon = async (id) => {
     try{
-      const newData = pokemonData.filter( data => data.id !== pokemonID);
-      setPokemonData(newData);
+      // const newData = pokemonData.filter( data => data.id !== pokemonID);
+      // setPokemonData(newData);
+      await axios.delete(`${api}/api/pokemon/remove/${id}`).then((resp) => {
+        console.log("Delete Result: ", resp)
+      }).catch((err) => {
+        console.log(err.response.data);
+      });
+
+      openNotif('warning');
+      fetchPokemonData();
+      handleOk();
+      
     }catch(e){
       openNotif('error');
     }
@@ -134,8 +179,8 @@ function App() {
   // Search
   const search = (data) => {
     return data.filter((item) =>
-      item.name.toLowerCase().includes(searchValue) ||
-      item.types[0].type.name.toLowerCase().includes(searchValue)
+      item.pokemonName.toLowerCase().includes(searchValue) ||
+      item.type.toLowerCase().includes(searchValue)
     )
   }
 
@@ -144,18 +189,18 @@ function App() {
         
         {/* Header */}
         <div className='fixed z-40 w-full bg-white md:static'>
-          <div className='flex flex-col lg:flex-row w-full h-12 mt-5 mb-10'>
-            <div className='lg:w-1/3 w-full flex items-center justify-center'>
-              <p className='px-16 lg:px-5 text-3xl font-semibold tracking-wide text-gray-500 font-poppins'>List of Pokemon</p>
+          <div className='flex flex-col w-full h-12 mt-5 mb-10 lg:flex-row'>
+            <div className='flex items-center justify-center w-full lg:w-1/3'>
+              <p className='px-16 text-3xl font-semibold tracking-wide text-gray-500 lg:px-5 font-poppins'>List of Pokemon</p>
             </div>
-            <div className='lg:w-1/3 w-full lg:px-0 px-10'>
+            <div className='w-full px-10 lg:w-1/3 lg:px-0'>
               <Input style={{ fontSize: '16', borderColor: "#747C95" }} className='w-full rounded-2xl mr-3.5 lg:mt-2 mt-4 m-auto items-center font-poppins bor' placeholder='Search Pokemon...' suffix={<BiSearchAlt className="text-xl" style={{color: "#747C95" }}/>}
                     onChange = {(e) => {setSearchValue(e.target.value.toLowerCase())}} value={searchValue}/>
             </div>
-            <div className='lg:w-1/3 w-full lg:px-0 px-10 lg:mt-0 mt-4'>
+            <div className='w-full px-10 mt-4 lg:w-1/3 lg:px-0 lg:mt-0'>
               <div className='relative w-full'>
-                <div className='absolute right-0 lg:w-auto w-full'>
-                  <Button className="lg:w-auto w-full h-10 px-10 my-auto text-xs font-medium tracking-wide border-0 rounded-lg font-poppins md:text-lg sm:text-base" style={{backgroundColor: '#46E4AC'}}
+                <div className='absolute right-0 w-full lg:w-auto'>
+                  <Button className="w-full h-10 px-10 my-auto text-xs font-medium tracking-wide border-0 rounded-lg lg:w-auto font-poppins md:text-lg sm:text-base" style={{backgroundColor: '#46E4AC'}}
                     onClick={() => {
                       setAddModal(true);
                     }}>
@@ -168,29 +213,29 @@ function App() {
         </div>
 
         {/* Body */}
-        <div className="flex items-center justify-center w-full overflow-auto min-w-screen">
-          <div className="lg:mt-0 sm:mt-44 md:mt-20 mt-48 grid grid-flow-row-dense grid-cols-1 gap-20 md:grid-cols-2 lg:grid-cols-3">
-            
-              {/* Pokemon Card */}
-              {pokemonData && search(pokemonData).map((pokemon) => (
+        {/* Pokemon Card */}
+        {pokemonData.length > 0? (
+          <div className="flex items-center justify-center w-full overflow-auto min-w-screen">
+            <div className="grid grid-flow-row-dense grid-cols-1 gap-20 mt-48 lg:mt-0 sm:mt-44 md:mt-20 md:grid-cols-2 lg:grid-cols-3">
+              {search(pokemonData).map((pokemon) => (
                 <div className="relative float-left w-auto p-5 mt-2 border-2 rounded-lg shadow-md site-card-wrapper" key={pokemon.id}>
                   <div className="items-center justify-center w-full">
                     <div className="flex flex-col justify-center w-full gap-1 text-center">
                       <div className="flex items-center justify-center flex-auto p-10 pl-12 pr-12 border-b-1 bg-slate-400">
-                        <img alt={pokemon.name} className="w-auto h-28" src={pokemon.sprites.front_default}/>
+                        <img alt={pokemon.pokemonName} className="w-auto h-28" src={pokemon.image}/>
                       </div>
                       <p className="text-2xl price font-poppins" style={{textTransform: 'capitalize'}}>
-                        <span className="price">{pokemon.name}</span>
+                        <span className="price">{pokemon.pokemonName}</span>
                       </p>
                       <p className="text-sm text-gray-600 quantity overflow-ellipsis" style={{textTransform: 'capitalize'}}>
-                        <span className="quantity">{pokemon.types[0].type.name}</span>
+                        <span className="quantity">{pokemon.type}</span>
                       </p>
                     </div>
                     <div className="flex flex-row items-center justify-center w-full gap-1 pt-6 pb-2 mt-2 border-t-1">
-                      <Button className="w-32 h-10 px-10 my-auto text-xs font-medium tracking-wide border-0 rounded-lg font-poppins md:text-lg sm:text-base" style={{backgroundColor: '#46E4AC'}} onClick={() => {fetchData(pokemon.id); setUpdateModal(true);}}>
+                      <Button className="w-32 h-10 px-10 my-auto text-xs font-medium tracking-wide border-0 rounded-lg font-poppins md:text-lg sm:text-base" style={{backgroundColor: '#46E4AC'}} onClick={() => {fetchData(pokemon.PokemonID); setUpdateModal(true);}}>
                         <span>Edit</span>
                       </Button>
-                      <Popconfirm title="Delete Pokemon?" onConfirm={() => deletePokemon(pokemon.id)} okText="Yes">
+                      <Popconfirm title={`Delete ${pokemon.pokemonName}?`} onConfirm={() => deletePokemon(pokemon.id)} okText={<p className="text-gray-950 hover:text-white">Yes</p>}>
                         <Button className="h-10 px-10 my-auto text-xs font-medium tracking-wide border-0 rounded-lg w-30 font-poppins md:text-lg sm:text-base" style={{backgroundColor: '#ED5264'}}>
                           <span>Delete</span>
                         </Button>
@@ -199,9 +244,15 @@ function App() {
                   </div>
                 </div>
               ))}
-              
+            </div>
           </div>
-        </div>
+        ) 
+        : 
+        (
+          <div className='flex items-center justify-center w-full pt-16 lg:pt-0'>
+            <EmptyPokemon/>
+          </div>
+        )}
 
         {/* Modal For Adding Pokemon */}
         <Modal title={"Add Pokemon"} open={addModal} onOk={handleOk} onCancel={handleOk} width={300}
